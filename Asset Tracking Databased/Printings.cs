@@ -12,14 +12,22 @@ namespace Asset_Tracking_Databased
         // I initially wanted to combine GetTypes and GetOffice but they were different kind of lists.
         // Combining them made it more confusing than having some repetition by using two methods.
         // Therefore, I have two methods that do relatively the same but for different list types.
-        public static int GetTypes(DemoDBContext context)
+        public static int GetTypes(DemoDBContext context, int edit = -1)
         {
             List<ProductType> results = context.ProductTypes.ToList();
             int i = 1;
 
             // Clearing console after loading the database properly
             Console.Clear();
-            Console.WriteLine("Below is a list of the different products.");
+
+            // If edit is NOT -1, it means we're editting an item. Adding a warning for this.
+            if (edit != -1)
+            {
+                Products editProduct = context.Products.SingleOrDefault(x => x.ID == edit);
+                ErrorMessage("WARNING: You are editting a product: " + editProduct.Brand + " " + editProduct.Model + "\n");
+            }
+
+            Console.WriteLine("Below is a list of the different product types.");
             foreach (var type in results)
             {
                 Console.WriteLine($"{i}) {type.TypeName}");
@@ -75,7 +83,7 @@ namespace Asset_Tracking_Databased
 
         public static ConsoleKeyInfo MainMenu()
         {
-            // Options within the main menu
+            // Options within the main menu, and other variables
             string[] options = new string[]
             {
                 "C: Add an item",
@@ -83,8 +91,6 @@ namespace Asset_Tracking_Databased
                 "U: Edit an item",
                 "D: Delete an item"
             };
-            // Other variables used within the method
-            char c = 'a';
             ConsoleKeyInfo cKey;
 
             // Printing options, now with colour
@@ -104,7 +110,7 @@ namespace Asset_Tracking_Databased
                 switch (cKey.Key)
                 {
                     // Right answers return the result
-                    case ConsoleKey.C or ConsoleKey.R or ConsoleKey.U or ConsoleKey.D:                        
+                    case ConsoleKey.C or ConsoleKey.R or ConsoleKey.U or ConsoleKey.D:
                         return cKey;
 
                     // God knows why this case still wants a "break;" even though it literally closes the application. Like, seriously.

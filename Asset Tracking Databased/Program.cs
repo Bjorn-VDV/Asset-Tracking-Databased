@@ -1,6 +1,13 @@
 ﻿using Asset_Tracking_Databased;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+
+Printings.SuccessMessage("\nPlease wait as the database gets created.");
+DemoDBContext context = new DemoDBContext();
+await context.Database.MigrateAsync();
+
 
 Console.ResetColor();
 Start();
@@ -10,16 +17,20 @@ Start();
 // I could use a while loop, but restarting the code by going directly to the start when
 // calling the method creates less potential for code breaking somewhere by accident with
 // overwriting things
+
+
+
 static void Start()
 {
-    // Starting variables
+    // Starting variables + unicode creation. Clearing in case of recalling start
     DemoDBContext context = new DemoDBContext();
-    // Unicode for currencies just in case it's needed
     Console.OutputEncoding = System.Text.Encoding.Unicode;
-
     Console.Clear();
+
+    // Running main menu, getting result choice back
     ConsoleKeyInfo c = Printings.MainMenu();
     Printings.SuccessMessage("\nPlease wait as the database loads.");
+
     switch (c.Key)
     {
         case ConsoleKey.C:
@@ -31,12 +42,13 @@ static void Start()
             break;
 
         case ConsoleKey.U:
-            int toEdit = EditFinder(context);
+            int toEdit = ReadingProducts(context, true);
             ProductChanges(context, toEdit);
             break;
 
         case ConsoleKey.D:
-
+            int toDel = ReadingProducts(context, true);
+            DeleteItem(context, toDel);
             break;
     }
 
@@ -55,7 +67,8 @@ static void ProductChanges(DemoDBContext context, int edit = -1)
 
         // asking what to add. Using empty CW to add a space before the prompts
         Console.WriteLine("");
-        whichType = Printings.GetTypes(context) - 1;
+
+        whichType = Printings.GetTypes(context, edit) - 1;
 
         // Obtaining item brand and model
         Console.Write("Please provide the item's brand: ");
@@ -136,7 +149,12 @@ static void ProductChanges(DemoDBContext context, int edit = -1)
                 else
                 {
                     Products toEdit = context.Products.FirstOrDefault(x => x.ID == edit);
-                    toEdit = new Products { OfficeID = officeNr + 1, ProductTypeID = whichType + 1, Brand = brand, Model = model, Date = date.ToString("yyyy-MM-dd"), UKPrice = price / 100 };
+                    toEdit.OfficeID = officeNr + 1;
+                    toEdit.ProductTypeID = whichType + 1;
+                    toEdit.Brand = brand;
+                    toEdit.Model = model;
+                    toEdit.Date = date.ToString("yyyy-MM-dd");
+                    toEdit.UKPrice = (price / 100);
                 }
                 context.SaveChanges();
                 break;
@@ -181,7 +199,7 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
     products = products.OrderBy(x => x.ProductTypeID).ThenBy(x => x.Date).ToList();
 
     // Printing the list
-    while (true)
+    do
     {
         // Resetting listpos here for colouring
         int listPos = 0;
@@ -218,22 +236,27 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
             listPos++;
         }
 
-        ConsoleKeyInfo cKey = Console.ReadKey();
-        if (cKey.Key == ConsoleKey.UpArrow)
+        // This is to navigate the list above
+        if (scroll == true)
         {
-            if (choice > 0) choice--;
-            else choice = products.Count-1;
+            ConsoleKeyInfo cKey = Console.ReadKey();
+            if (cKey.Key == ConsoleKey.UpArrow)
+            {
+                if (choice > 0) choice--;
+                else choice = products.Count - 1;
+            }
+            else if (cKey.Key == ConsoleKey.DownArrow)
+            {
+                if (choice < products.Count - 1) choice++;
+                else choice = 0;
+            }
+            // Fetching result by pressing enter
+            else if (cKey.Key == ConsoleKey.Enter)
+            {
+                return products[choice].ID;
+            }
         }
-        else if (cKey.Key == ConsoleKey.DownArrow)
-        {
-            if (choice < products.Count-1) choice++;
-            else choice = 0;
-        }
-        else if (cKey.Key == ConsoleKey.Enter)
-        {
-            Console.WriteLine(products[choice].Model);
-        }
-    }
+    } while (scroll == true);
     Console.Write("\nPress enter to exit.");
     Console.ReadLine();
     if (scroll == true) return products[2].ID;
@@ -241,75 +264,21 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
     return -1;
 }
 
-static int EditFinder(DemoDBContext context)
+static void DeleteItem(DemoDBContext context, int toDel)
 {
-    ReadingProducts(context);
-    return -1;
+    Products productToDel = context.Products.SingleOrDefault(x => x.ID == toDel);
+    try
+    {
+        context.Products.Remove(productToDel);
+        context.SaveChanges();
+        Printings.SuccessMessage("Item has successfully been deleted.\nPress enter to return to the start.");
+        Console.ReadLine();
+        Start();
+    }
+    catch
+    {
+        Printings.ErrorMessage("Something broke. Did you try to edit an inexistent item?");
+        Console.ReadLine();
+    }
+
 }
-/*
-LeaveNestedLoop:
-// Title row
-TitlePrinter();
-
-// Sorting list
-List<Electronics> sortedElec = objects.OrderBy(x => x.Office).ThenByDescending(x => x.dt).ToList();
-
-// Actual object printing
-float localPrice;
-foreach (var obj in sortedElec)
-{
-    // Date checkers
-    DateTime expiryDate = DateTime.Now.AddYears(-3);
-    if (obj.dt < expiryDate.AddMonths(3))
-    {
-        Console.ForegroundColor = ConsoleColor.Red;
-    }
-    else if (obj.dt < expiryDate.AddMonths(6))
-    {
-        Console.ForegroundColor = ConsoleColor.Yellow;
-    }
-
-    // Printing based on office for "current" prices
-    Console.Write(obj.listLayer());
-    if (obj.Office == "Spain")
-    {
-        localPrice = obj.PriceinUK / 0.84f;
-        Console.WriteLine(String.Format("{0}{1,15}", "     EUR".PadRight(15), localPrice.ToString("C2", CultureInfo.CreateSpecificCulture("es-ES"))));
-    }
-    else if (obj.Office == "UK")
-    {
-        localPrice = obj.PriceinUK;
-        Console.WriteLine(String.Format("{0}{1,15}", "     GBP".PadRight(15), localPrice.ToString("C2", CultureInfo.CreateSpecificCulture("en-GB"))));
-    }
-    else if (obj.Office == "Sweden")
-    {
-        localPrice = obj.PriceinUK / 0.082f;
-        Console.WriteLine(String.Format("{0}{1,15}", "     SEK".PadRight(15), localPrice.ToString("C2", CultureInfo.CreateSpecificCulture("se-SE"))));
-    }
-
-    Console.ResetColor();
-}
-        }
-
-        static void TitlePrinter()
-{
-    Console.WriteLine("{0}{1}{2}{3}{4}{5}{6}{7}",
-       "Type".PadRight(15),
-       "Brand".PadRight(15),
-       "Model".PadRight(15),
-       "Office".PadRight(15),
-       "Purchase Date".PadRight(15),
-       "Price in GBP".PadRight(15),
-       "Currency".PadRight(10),
-       "Local Price Today");
-
-    Console.WriteLine("{0}{1}{2}{3}{4}{5}{6}{7}",
-        "----".PadRight(15),
-        "-----".PadRight(15),
-        "-----".PadRight(15),
-        "------".PadRight(15),
-        "-------------".PadRight(15),
-        "-----------".PadRight(15),
-        "--------".PadRight(10),
-        "-----------------");
-}*/

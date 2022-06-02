@@ -13,7 +13,8 @@ namespace Asset_Tracking_Databased
         public DbSet<Products>? Products { get; set; }
         public DbSet<ProductType>? ProductTypes { get; set; }
 
-        string connectionString = @"Data Source = S4D03; Initial Catalog = Demobase; Integrated Security = True;";
+        static string pcName = Environment.MachineName.ToString();
+        string connectionString = $@"Data Source = {pcName}; Initial Catalog = Demobase; Integrated Security = True;";
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
