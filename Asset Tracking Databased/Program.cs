@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
 // Database instantiation in case it doesn't yet exist
-// 
 DemoDBContext context = new DemoDBContext();
 try
 {
@@ -303,37 +302,10 @@ static int ReadingProducts(DemoDBContext context, bool editscroll = false)
                 Start(context);
                 break;
             default:
-                Console.ReadLine(); break;
-
-                /*
-                            if (cKey.Key == ConsoleKey.UpArrow)
-                            {
-                            }
-                            else if (cKey.Key == ConsoleKey.DownArrow)
-                            {
-                                if (choice < products.Count - 1) choice++;
-                                else choice = 0;
-                            }
-                            // Fetching result by pressing enter
-                            else if (cKey.Key == ConsoleKey.Enter && editscroll == true)
-                            {
-                            }
-                            else if (cKey.Key == ConsoleKey.Escape)
-                            {
-                            }*/
+                Console.ReadLine();
+                break;
         }
-    } // Do while: If scroll is true, we have to repeat the code. Otherwise, only once
-    while (true);
-
-
-    // Adding this here in case you somehow manage to break out of the loop despite scrolling
-    if (editscroll == true) return products[2].ID;
-
-    // Back to the start
-    Start(context);
-
-    // Return value over the entire code to make the method happy
-    return -1;
+    } while (true);
 }
 
 static void DeleteItem(DemoDBContext context, int toDel)
