@@ -3,27 +3,25 @@ using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-
+// Database instantiation in case it doesn't yet exist
 Printings.SuccessMessage("\nPlease wait as the database gets created.");
 DemoDBContext context = new DemoDBContext();
 await context.Database.MigrateAsync();
 
-
+// ResetColor + Clear in case the console holds strange colours from a previous app
 Console.ResetColor();
-Start();
+Console.Clear();
+
+Start(context);
 
 // var test1 = context.Products.Include(x => x.Office).Include(x => x.ProductType).ToList();
 
 // I could use a while loop, but restarting the code by going directly to the start when
 // calling the method creates less potential for code breaking somewhere by accident with
 // overwriting things
-
-
-
-static void Start()
+static void Start(DemoDBContext context)
 {
     // Starting variables + unicode creation. Clearing in case of recalling start
-    DemoDBContext context = new DemoDBContext();
     Console.OutputEncoding = System.Text.Encoding.Unicode;
     Console.Clear();
 
@@ -182,7 +180,7 @@ static void ProductChanges(DemoDBContext context, int edit = -1)
             }
             else if (key.Key == ConsoleKey.N)
             {
-                Start();
+                Start(context);
             }
         }
     }
@@ -260,7 +258,7 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
     Console.Write("\nPress enter to exit.");
     Console.ReadLine();
     if (scroll == true) return products[2].ID;
-    Start();
+    Start(context);
     return -1;
 }
 
@@ -273,7 +271,7 @@ static void DeleteItem(DemoDBContext context, int toDel)
         context.SaveChanges();
         Printings.SuccessMessage("Item has successfully been deleted.\nPress enter to return to the start.");
         Console.ReadLine();
-        Start();
+        Start(context);
     }
     catch
     {
