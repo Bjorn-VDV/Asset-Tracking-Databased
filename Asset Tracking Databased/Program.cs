@@ -231,6 +231,18 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
                 Console.BackgroundColor = ConsoleColor.White;
             }
 
+            // Colouring according to expirydate
+            DateTime expiryDate = DateTime.Now.AddYears(-3);
+            if (Convert.ToDateTime(product.Date) < expiryDate.AddMonths(3))
+            {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
+            }
+            else if (Convert.ToDateTime(product.Date) < expiryDate.AddMonths(6))
+            {
+                Console.ForegroundColor = ConsoleColor.DarkYellow;
+            }
+
+
             // Printing the actual stuff
             string prodModShort = Printings.MakeSmaller(product.Model);
             Console.WriteLine(
@@ -244,38 +256,48 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
                         );
 
             // Resetting colour if it matched, so next items remain default colour
-            if (Console.ForegroundColor == ConsoleColor.Black) Console.ResetColor();
-
+            if (Console.ForegroundColor != ConsoleColor.White) Console.ResetColor();
             listPos++;
         }
 
         // This is to navigate the list above
-        ConsoleKeyInfo cKey = Console.ReadKey(true);
-        if (cKey.Key == ConsoleKey.UpArrow)
+        if (scroll == true)
         {
-            if (choice > 0) choice--;
-            else choice = products.Count - 1;
+            Console.Write("\nPress escape to go back to the menu.");
+            ConsoleKeyInfo cKey = Console.ReadKey(true);
+            if (cKey.Key == ConsoleKey.UpArrow)
+            {
+                if (choice > 0) choice--;
+                else choice = products.Count - 1;
+            }
+            else if (cKey.Key == ConsoleKey.DownArrow)
+            {
+                if (choice < products.Count - 1) choice++;
+                else choice = 0;
+            }
+            // Fetching result by pressing enter
+            else if (cKey.Key == ConsoleKey.Enter)
+            {
+                return products[choice].ID;
+            }
+            else if (cKey.Key == ConsoleKey.Escape)
+            {
+                Start(context);
+            }
         }
-        else if (cKey.Key == ConsoleKey.DownArrow)
-        {
-            if (choice < products.Count - 1) choice++;
-            else choice = 0;
-        }
-        // Fetching result by pressing enter
-        else if (cKey.Key == ConsoleKey.Enter)
-        {
-            return products[choice].ID;
-        }
-        else if (cKey.Key == ConsoleKey.Escape)
-        {
-            Start(context);
-        }
+    } // Do while: If scroll is true, we have to repeat the code. Otherwise, only once
+    while (scroll == true);
 
-    } while (scroll == true);
     Console.Write("\nPress enter to exit.");
     Console.ReadLine();
+
+    // Adding this here in case you somehow manage to break out of the loop despite scrolling
     if (scroll == true) return products[2].ID;
+
+    // Back to the start
     Start(context);
+
+    // Return value over the entire code to make the method happy
     return -1;
 }
 
