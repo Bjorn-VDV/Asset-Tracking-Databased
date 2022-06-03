@@ -5,9 +5,23 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using System.Data.Entity.Migrations;
 
 // Database instantiation in case it doesn't yet exist
-Printings.SuccessMessage("\nPlease wait as the database gets created.");
+// 
 DemoDBContext context = new DemoDBContext();
-context.Database.Migrate();
+try
+{
+    Printings.SuccessMessage("Checking for updates.\n");
+    if (context.Database.GetPendingMigrations().Any())
+    {
+        Printings.SuccessMessage("Please wait as the database gets created.");
+        context.Database.Migrate();
+    }
+}
+catch (Microsoft.Data.SqlClient.SqlException)
+{
+    Printings.ErrorMessage("\nThe connectionstring might have broken. Please use a more exact string. \n(This usually happens" +
+    "when the computer has different login values.)\n");
+    Environment.Exit(324);
+}
 
 // ResetColor + Clear in case the console holds strange colours from a previous app
 Console.ResetColor();
@@ -236,25 +250,27 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
         }
 
         // This is to navigate the list above
-        if (scroll == true)
+        ConsoleKeyInfo cKey = Console.ReadKey(true);
+        if (cKey.Key == ConsoleKey.UpArrow)
         {
-            ConsoleKeyInfo cKey = Console.ReadKey();
-            if (cKey.Key == ConsoleKey.UpArrow)
-            {
-                if (choice > 0) choice--;
-                else choice = products.Count - 1;
-            }
-            else if (cKey.Key == ConsoleKey.DownArrow)
-            {
-                if (choice < products.Count - 1) choice++;
-                else choice = 0;
-            }
-            // Fetching result by pressing enter
-            else if (cKey.Key == ConsoleKey.Enter)
-            {
-                return products[choice].ID;
-            }
+            if (choice > 0) choice--;
+            else choice = products.Count - 1;
         }
+        else if (cKey.Key == ConsoleKey.DownArrow)
+        {
+            if (choice < products.Count - 1) choice++;
+            else choice = 0;
+        }
+        // Fetching result by pressing enter
+        else if (cKey.Key == ConsoleKey.Enter)
+        {
+            return products[choice].ID;
+        }
+        else if (cKey.Key == ConsoleKey.Escape)
+        {
+            Start(context);
+        }
+
     } while (scroll == true);
     Console.Write("\nPress enter to exit.");
     Console.ReadLine();
