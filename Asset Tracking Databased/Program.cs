@@ -1,8 +1,6 @@
 ﻿using Asset_Tracking_Databased;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
-using Microsoft.EntityFrameworkCore.Migrations;
-using System.Data.Entity.Migrations;
 
 // Database instantiation in case it doesn't yet exist
 // 
@@ -201,7 +199,7 @@ static void ProductChanges(DemoDBContext context, int edit = -1)
     }
 }
 
-static int ReadingProducts(DemoDBContext context, bool scroll = false)
+static int ReadingProducts(DemoDBContext context, bool editscroll = false)
 {
     // Fetching the entire list including information about offices and product type
     List<Products> products = context.Products.Include(x => x.ProductType).Include(x => x.Office).ToList();
@@ -225,7 +223,7 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
         foreach (Products product in products)
         {
             // Checking if the item matches with your personal choice when scrolling. If so, colours!
-            if (scroll == true && choice == listPos)
+            if (choice == listPos)
             {
                 Console.ForegroundColor = ConsoleColor.Black;
                 Console.BackgroundColor = ConsoleColor.White;
@@ -260,39 +258,76 @@ static int ReadingProducts(DemoDBContext context, bool scroll = false)
             listPos++;
         }
 
-        // This is to navigate the list above
-        if (scroll == true)
+        // Giving guiding information based on your choice
+        if (editscroll != true)
+        {
+            Console.Write("\nPress enter on an item to read the full name (Escape to exit).");
+        }
+        else
         {
             Console.Write("\nPress escape to go back to the menu.");
-            ConsoleKeyInfo cKey = Console.ReadKey(true);
-            if (cKey.Key == ConsoleKey.UpArrow)
-            {
-                if (choice > 0) choice--;
-                else choice = products.Count - 1;
-            }
-            else if (cKey.Key == ConsoleKey.DownArrow)
-            {
+        }
+
+
+        ConsoleKeyInfo cKey = Console.ReadKey(true);
+        switch (cKey.Key)
+        {
+            // This is to navigate the list above
+            case ConsoleKey.DownArrow:
                 if (choice < products.Count - 1) choice++;
                 else choice = 0;
-            }
-            // Fetching result by pressing enter
-            else if (cKey.Key == ConsoleKey.Enter)
-            {
-                return products[choice].ID;
-            }
-            else if (cKey.Key == ConsoleKey.Escape)
-            {
+                break;
+            case ConsoleKey.UpArrow:
+                if (choice > 0) choice--;
+                else choice = products.Count - 1;
+                break;
+
+            // Pressing enter when editing: Return item ID to edit. Otherwise, print full name.
+            case ConsoleKey.Enter:
+                if (editscroll == true)
+                {
+                    return products[choice].ID;
+                }
+                else
+                {
+                    Printings.SuccessMessage($"\n\nFull name: {products[choice].Brand}, {products[choice].Model}");
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write("\nPress enter to return to the list.");
+                    Console.ResetColor();
+                    Console.ReadLine();
+                }
+                break;
+
+            // Break out of loop
+            case ConsoleKey.Escape:
                 Start(context);
-            }
+                break;
+            default:
+                Console.ReadLine(); break;
+
+                /*
+                            if (cKey.Key == ConsoleKey.UpArrow)
+                            {
+                            }
+                            else if (cKey.Key == ConsoleKey.DownArrow)
+                            {
+                                if (choice < products.Count - 1) choice++;
+                                else choice = 0;
+                            }
+                            // Fetching result by pressing enter
+                            else if (cKey.Key == ConsoleKey.Enter && editscroll == true)
+                            {
+                            }
+                            else if (cKey.Key == ConsoleKey.Escape)
+                            {
+                            }*/
         }
     } // Do while: If scroll is true, we have to repeat the code. Otherwise, only once
-    while (scroll == true);
+    while (true);
 
-    Console.Write("\nPress enter to exit.");
-    Console.ReadLine();
 
     // Adding this here in case you somehow manage to break out of the loop despite scrolling
-    if (scroll == true) return products[2].ID;
+    if (editscroll == true) return products[2].ID;
 
     // Back to the start
     Start(context);

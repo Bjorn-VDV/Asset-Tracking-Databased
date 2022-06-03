@@ -101,7 +101,7 @@ namespace Asset_Tracking_Databased
             {
                 Console.WriteLine(option);
             }
-            Console.Write("\nPress 'escape' to close the application.\nPlease enter the desired letter; C, R, U, or D: ");
+            Console.Write("\nPlease enter the desired letter; C, R, U, or D (Escape to exit): ");
 
             // Getting choice. Will reset if not CRUD. Escape to exit environment.
             while (true)
