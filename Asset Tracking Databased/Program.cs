@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore.Migrations;
+using System.Data.Entity.Migrations;
 
 // Database instantiation in case it doesn't yet exist
 Printings.SuccessMessage("\nPlease wait as the database gets created.");
 DemoDBContext context = new DemoDBContext();
-await context.Database.MigrateAsync();
+context.Database.Migrate();
 
 // ResetColor + Clear in case the console holds strange colours from a previous app
 Console.ResetColor();
